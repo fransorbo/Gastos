@@ -17,6 +17,9 @@ const TAB = {
   INGRESOS: 'Ingresos',
 };
 
+// Tabs donde se copian los gastos (definida aquí para no depender del orden de carga de archivos).
+const TABS_DESTINO = [TAB.AMBOS, TAB.CAMILA, TAB.FRAN];
+
 const MOV_COLS = [
   'id', 'creado_en', 'cargado_por', 'tipo', 'fecha', 'importe_eur',
   'categoria_app', 'categoria_excel', 'subcategoria_excel', 'detalle',

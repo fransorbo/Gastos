@@ -73,10 +73,8 @@ iPhone (app) ──► Apps Script (tu cuenta de Google) ──► Sheet compart
 
 1. Abre el **sheet compartido** → menú **Extensiones → Apps Script**.
 2. Se abre un editor con un archivo `Código.gs`. Borra todo su contenido.
-3. Para cada archivo de la carpeta `apps-script/` de este repo (`Config.gs`, `Code.gs`, `Movimientos.gs`, `Resumen.gs`, `Fijos.gs`, `Setup.gs`, `Tests.gs`):
-   - Pulsa **＋ (Añadir un archivo) → Secuencia de comandos** y ponle el mismo nombre **sin** `.gs`. Por ejemplo `Config`.
-   - Pega el contenido del archivo.
-   - Puedes pegar `Code.gs` en el `Código` que ya existía.
+3. Pega **todo** el contenido de [`apps-script-un-archivo/Gastos.gs`](apps-script-un-archivo/Gastos.gs). Es el backend completo en un solo archivo.
+   Si cambias algo en `/apps-script`, vuelve a generarlo con `tests/combinar.sh`.
 4. **Manifiesto:** ⚙️ *Configuración del proyecto* → activa **"Mostrar el archivo de manifiesto appsscript.json en el editor"** → vuelve al editor, abre `appsscript.json` y reemplázalo por el de este repo. Ahí se fija la zona horaria Europe/Madrid.
 5. Guarda (💾).
 

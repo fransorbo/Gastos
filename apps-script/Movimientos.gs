@@ -6,8 +6,6 @@
  * Mandar el mismo movimiento dos veces deja exactamente el mismo resultado.
  */
 
-const TABS_DESTINO = [TAB.AMBOS, TAB.CAMILA, TAB.FRAN];
-
 /** Punto de entrada para un lote (la cola offline del móvil). Usa LockService. */
 function sincronizar(items) {
   if (!Array.isArray(items)) throw new Error('items debe ser una lista');
