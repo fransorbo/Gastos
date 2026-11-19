@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <title>Gastos F&amp;C</title>
+  <meta name="theme-color" content="#0f766e" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111417" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Gastos">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <span id="titulo">Cargar</span>
+    <button id="syncBadge" class="sync-badge" hidden></button>
+  </header>
+
+  <main>
+    <!-- ======================= CARGAR ======================= -->
+    <section id="v-cargar" class="vista activa">
+      <form id="form" autocomplete="off" novalidate>
+        <div class="seg seg-tipo" id="segTipo">
+          <button type="button" data-v="Gasto" class="on">Gasto</button>
+          <button type="button" data-v="Ingreso">Ingreso</button>
+        </div>
+
+        <div id="editando" class="editando" hidden>
+          Editando movimiento · <button type="button" id="cancelarEdicion">Cancelar</button>
+        </div>
+
+        <label class="importe">
+          <input id="importe" inputmode="decimal" enterkeyhint="done" placeholder="0,00" aria-label="Importe en euros" autofocus>
+          <span>€</span>
+        </label>
+
+        <div class="chips chips-4" id="formas" aria-label="Forma de pago"></div>
+
+        <!-- Solo gasto -->
+        <div class="solo-gasto">
+          <div class="fila2">
+            <div class="seg" id="segPC">
+              <button type="button" data-v="Personal" class="on">Personal</button>
+              <button type="button" data-v="Compartido">Compartido</button>
+            </div>
+            <div class="seg" id="segFV">
+              <button type="button" data-v="Variable" class="on">Variable</button>
+              <button type="button" data-v="Fijo">Fijo</button>
+            </div>
+          </div>
+
+          <div id="compartidoBox" class="compartido" hidden>
+            <span class="mini">Pagó</span>
+            <div class="seg seg-sm" id="segPagado">
+              <button type="button" data-v="Fran">Fran</button>
+              <button type="button" data-v="Cami">Cami</button>
+            </div>
+            <button type="button" id="repartoBtn" class="reparto-btn">F 60% · C 40%</button>
+          </div>
+          <div id="repartoEdit" class="reparto-edit" hidden>
+            <span>Fran <b id="rFran">60</b>%</span>
+            <input type="range" id="rango" min="0" max="100" step="5" value="60" aria-label="Porcentaje de Fran">
+            <span>Cami <b id="rCami">40</b>%</span>
+          </div>
+
+          <div class="cats" id="cats" aria-label="Categoría"></div>
+          <div class="chips subcats" id="subcats" hidden></div>
+        </div>
+
+        <!-- Solo ingreso -->
+        <div class="solo-ingreso" hidden>
+          <span class="mini">Tipo</span>
+          <div class="chips chips-2" id="tiposIngreso"></div>
+          <span class="mini">¿Quién lo recibe?</span>
+          <div class="seg" id="segRecibe">
+            <button type="button" data-v="Fran">Fran</button>
+            <button type="button" data-v="Cami">Cami</button>
+          </div>
+        </div>
+
+        <div class="fila2 fila-detalle">
+          <input id="detalle" list="sugerencias" placeholder="Detalle (opcional)" enterkeyhint="done" maxlength="120">
+          <datalist id="sugerencias"></datalist>
+          <input id="fecha" type="date" aria-label="Fecha">
+        </div>
+
+        <button type="submit" id="guardar" class="guardar">Guardar</button>
+        <label class="haptic" aria-hidden="true"><input type="checkbox" switch id="haptic"></label>
+      </form>
+    </section>
+
+    <!-- ======================= MOVIMIENTOS ======================= -->
+    <section id="v-movs" class="vista">
+      <div class="barra">
+        <label class="check"><input type="checkbox" id="soloMios"> Solo míos</label>
+        <button id="refrescarMovs" class="link">Actualizar</button>
+      </div>
+      <ul id="listaMovs" class="lista"></ul>
+      <p id="movsVacio" class="vacio" hidden>No hay movimientos todavía.</p>
+    </section>
+
+    <!-- ======================= RESUMEN ======================= -->
+    <section id="v-resumen" class="vista">
+      <div class="mesnav">
+        <button id="mesPrev" aria-label="Mes anterior">‹</button>
+        <strong id="mesLabel"></strong>
+        <button id="mesNext" aria-label="Mes siguiente">›</button>
+      </div>
+      <div id="resumen"></div>
+    </section>
+
+    <!-- ======================= FIJOS ======================= -->
+    <section id="v-fijos" class="vista">
+      <p class="ayuda">Los fijos activos se cargan solos el día indicado de cada mes (como "Auto"). Los importes y el resto de datos se editan en la tab <b>Fijos</b> del sheet.</p>
+      <ul id="listaFijos" class="lista"></ul>
+    </section>
+
+    <!-- ======================= AJUSTES ======================= -->
+    <section id="v-ajustes" class="vista">
+      <div class="card">
+        <span class="mini">¿Quién eres en este móvil?</span>
+        <div class="seg" id="segQuien">
+          <button type="button" data-v="Fran">Fran</button>
+          <button type="button" data-v="Cami">Cami</button>
+        </div>
+      </div>
+      <div class="card">
+        <label class="mini" for="cfgUrl">URL del backend (Apps Script)</label>
+        <input id="cfgUrl" placeholder="https://script.google.com/macros/s/…/exec" inputmode="url" autocapitalize="off" spellcheck="false">
+        <label class="mini" for="cfgToken">Token</label>
+        <input id="cfgToken" placeholder="token secreto" autocapitalize="off" spellcheck="false">
+        <button id="guardarCfg" class="btn">Guardar y probar conexión</button>
+        <p id="cfgEstado" class="mini"></p>
+      </div>
+      <div class="card">
+        <span class="mini">Pasar la configuración a otro móvil</span>
+        <button id="copiarCodigo" class="btn sec">Copiar código de configuración</button>
+        <input id="pegarCodigo" placeholder="…o pega aquí el código que te pasaron" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="card">
+        <p id="estadoCola" class="mini"></p>
+        <button id="forzarSync" class="btn">Forzar sincronización</button>
+        <button id="recargarCfg" class="btn sec">Recargar configuración (categorías, %)</button>
+      </div>
+      <p class="mini centro" id="version"></p>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button data-vista="cargar" class="on"><span>➕</span>Cargar</button>
+    <button data-vista="movs"><span>🧾</span>Movimientos</button>
+    <button data-vista="resumen"><span>📊</span>Resumen</button>
+    <button data-vista="fijos"><span>🔁</span>Fijos</button>
+    <button data-vista="ajustes"><span>⚙️</span>Ajustes</button>
+  </nav>
+
+  <!-- Primer uso: ¿quién eres? -->
+  <dialog id="dlgQuien" class="dlg">
+    <h2>¿Quién eres?</h2>
+    <p>Se guarda en este móvil. Puedes cambiarlo en Ajustes.</p>
+    <div class="seg grande">
+      <button type="button" data-v="Fran">Fran</button>
+      <button type="button" data-v="Cami">Cami</button>
+    </div>
+  </dialog>
+
+  <!-- Acciones sobre un movimiento -->
+  <dialog id="dlgMov" class="dlg">
+    <p id="dlgMovTexto"></p>
+    <button id="dlgEditar" class="btn">Editar</button>
+    <button id="dlgBorrar" class="btn peligro">Borrar</button>
+    <button id="dlgCerrar" class="btn sec">Cancelar</button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
