@@ -1,7 +1,7 @@
 /* Gastos F&C — PWA para cargar gastos e ingresos en Google Sheets. */
 'use strict';
 
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 
 /* ============================ Utilidades ============================ */
 
@@ -740,9 +740,16 @@ function codigoConfig() {
   return 'GFC1:' + btoa(unescape(encodeURIComponent(JSON.stringify({ u: LS.get('url', ''), t: LS.get('token', '') }))));
 }
 function leerCodigo(txt) {
-  const m = /GFC1:([A-Za-z0-9+/=]+)/.exec(String(txt || '').trim());
+  // Tolerante: el prefijo puede llegar en minúsculas (iOS/WhatsApp) y con espacios o saltos de línea
+  const limpio = String(txt || '').replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+  const m = /GFC1:([A-Za-z0-9+/=_-]+)/i.exec(limpio);
   if (!m) return null;
-  try { return JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch (e) { return null; }
+  let b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  try {
+    const c = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    return c && c.u && c.t ? c : null;
+  } catch (e) { return null; }
 }
 
 function enlazarAjustes() {
@@ -761,14 +768,19 @@ function enlazarAjustes() {
     try { await navigator.clipboard.writeText(codigoConfig()); toast('Código copiado. Mándaselo por WhatsApp'); }
     catch (e) { $('#pegarCodigo').value = codigoConfig(); $('#pegarCodigo').select(); toast('Cópialo del recuadro'); }
   });
-  $('#pegarCodigo').addEventListener('input', e => {
+  const aplicarCodigo = e => {
     const c = leerCodigo(e.target.value);
-    if (!c) return;
+    if (!c) {
+      if (e.type === 'change' && e.target.value.trim()) toast('Ese código no es válido. Cópialo entero de nuevo.', 3500);
+      return;
+    }
     LS.set('url', c.u); LS.set('token', c.t);
     e.target.value = '';
     pintarAjustes();
     probarConexion();
-  });
+  };
+  $('#pegarCodigo').addEventListener('input', aplicarCodigo);
+  $('#pegarCodigo').addEventListener('change', aplicarCodigo);
   $('#forzarSync').addEventListener('click', () => sincronizar({ avisar: true }));
   $('#recargarCfg').addEventListener('click', async () => {
     try { await cargarConfig(); toast('Configuración recargada ✓'); }
