@@ -14,6 +14,7 @@
   --warn: #b45309;
   --ok: #15803d;
   --bar: #e4e7eb;
+  --cami: #be185d;
   --tabs-h: 58px;
   color-scheme: light dark;
 }
@@ -34,6 +35,7 @@
     --warn: #f0a24a;
     --ok: #4ade80;
     --bar: #2b3036;
+    --cami: #f472b6;
   }
 }
 
@@ -58,6 +60,12 @@ button { cursor: pointer; border: 0; background: none; }
   padding: 6px 14px 2px; min-height: 34px;
 }
 #titulo { font-weight: 700; font-size: 20px; }
+.top-der { display: flex; align-items: center; gap: 8px; }
+.perfil {
+  width: 32px; height: 32px; border-radius: 50%; font-weight: 800; font-size: 16px;
+  background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center;
+}
+.perfil.cami { background: var(--cami); color: #fff; }
 .sync-badge {
   font-size: 13px; padding: 4px 10px; border-radius: 999px;
   background: var(--chip); color: var(--warn); font-weight: 600;
@@ -98,6 +106,9 @@ main { padding: 0 12px; }
 
 .chips { display: grid; gap: 6px; }
 .chips-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+#formas { grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); }
+#formas .chip { padding: 8px 2px; font-size: 13.5px; }
+#formas.muchas .chip { font-size: 12.5px; letter-spacing: -0.02em; }
 .chips-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .chip {
   background: var(--chip); border-radius: 10px; padding: 8px 4px; font-size: 14px; font-weight: 600;
@@ -107,6 +118,14 @@ main { padding: 0 12px; }
 .modo-ingreso .chip.on { background: var(--ingreso); color: #fff; }
 
 .fila2 { display: flex; gap: 8px; }
+.fila2 .seg button { padding: 8px 2px; font-size: 14px; }
+.seg-fv { flex: 1.35; }
+
+.cuotas { display: flex; align-items: center; gap: 10px; background: var(--accent-soft); border-radius: 12px; padding: 4px 8px; }
+.cuotas .contador { display: flex; align-items: center; gap: 4px; font-size: 15px; }
+.cuotas .contador button { width: 36px; height: 34px; border-radius: 10px; background: var(--card); font-size: 20px; font-weight: 700; }
+.cuotas .contador span { min-width: 74px; text-align: center; }
+.cuotas .mini { color: var(--text); font-size: 13px; line-height: 1.25; }
 
 .compartido { display: flex; align-items: center; gap: 8px; }
 .mini { font-size: 13px; color: var(--muted); }

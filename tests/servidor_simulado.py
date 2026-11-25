@@ -37,7 +37,8 @@ class H(SimpleHTTPRequestHandler):
         if a == 'bootstrap':
             return self._send({'ok': True, 'data': {
                 'categorias': [dict(categoria_app=c[0], categoria_excel=c[1], subcategoria_excel=c[2], fijo_o_variable=c[3], icono=c[4], mostrar=c[5], padre=c[6], orden=i) for i, c in enumerate(CATS)],
-                'formasPago': ['Cash', 'Santander', 'Revolut', 'Sabadell'],
+                'formasPago': ['Santander', 'Revolut', 'Cash', 'Sabadell', 'Monedas'],
+                'formasPagoPorPersona': {'Fran': ['Santander', 'Revolut', 'Cash', 'Sabadell', 'Monedas'], 'Cami': ['Santander', 'Sabadell', 'Cash', 'Revolut']},
                 'reparto': {'Alquiler': {'fran': 1, 'cami': 0}, 'Servicios de Casa': {'fran': 1, 'cami': 0}},
                 'pctIngresos': {'2026-10': {'fran': 0.6, 'cami': 0.4}},
                 'tiposIngreso': ['Sueldo', 'Paro', 'Extra-freelance', 'Reembolso-devolución']}})

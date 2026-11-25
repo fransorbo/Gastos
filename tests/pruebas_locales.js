@@ -74,6 +74,18 @@ const post = body => JSON.parse(doPost({ postData: { contents: JSON.stringify(bo
 check(post({ token: 'malo', action: 'bootstrap' }).ok === false, 'token incorrecto rechazado');
 const boot = post({ token, action: 'bootstrap' });
 check(boot.ok && boot.data.categorias.length === 16, 'bootstrap devuelve 16 categorías');
+check(JSON.stringify(boot.data.formasPagoPorPersona.Fran) === '["Santander","Revolut","Cash","Sabadell","Monedas"]', 'formas de pago de Fran en su orden');
+check(JSON.stringify(boot.data.formasPagoPorPersona.Cami) === '["Santander","Sabadell","Cash","Revolut"]', 'formas de pago de Cami en su orden, sin Monedas');
+// Formato viejo de Config (una sola columna "orden"): ambos ven la misma lista
+{
+  const cfgSh = ss.getSheetByName('Config');
+  cfgSh._set(1, 11, 'orden'); cfgSh._set(1, 12, '');
+  _cache.config = null;
+  const viejo = leerConfig_();
+  check(viejo.formasPagoPorPersona.Cami.length === 5 && viejo.formasPagoPorPersona.Fran[0] === 'Santander', 'Config con formato viejo sigue funcionando');
+  cfgSh._set(1, 11, 'orden_fran'); cfgSh._set(1, 12, 'orden_cami');
+  _cache.config = null;
+}
 const key = Y + '-' + String(M).padStart(2, '0');
 print('  pctIngresos keys: ' + Object.keys(boot.data.pctIngresos).join(','));
 
@@ -101,8 +113,14 @@ check(filaAObjeto_(mov.getRange(9, 1, 1, MOV_COLS.length).getValues()[0]).pct_fr
 const malo = post({ token, action: 'sync', items: [{ id: 'bad', cargado_por: 'Fran', tipo: 'Gasto', fecha: key + '-01', importe_eur: 5, categoria_app: 'Inventada' }] });
 check(malo.ok && malo.data[0].ok === false, 'categoría desconocida → error por item, no rompe el lote');
 
+const cu = post({ token, action: 'sync', items: [1, 2, 3].map(i => ({ id: 'cuo-c' + i, cargado_por: 'Fran', tipo: 'Gasto', fecha: key + '-0' + i, importe_eur: 100, categoria_app: 'Hogar', detalle: 'Mesa (cuota ' + i + '/3)', personal_o_compartido: 'Personal', pagado_por: 'Fran', fijo_o_variable: 'Cuotas' })) });
+check(cu.data.every(x => x.ok && x.destino.indexOf('Gastos Fran!') === 0), 'cuotas se copian a Gastos Fran');
+{
+  const ult = filaAObjeto_(mov.getRange(mov.getLastRow(), 1, 1, MOV_COLS.length).getValues()[0]);
+  check(ult.fijo_o_variable === 'Cuotas', 'fijo_o_variable = Cuotas se respeta');
+}
 const lst = post({ token, action: 'list', limite: 50 });
-check(lst.ok && lst.data.length === 8, 'list devuelve 8 movimientos');
+check(lst.ok && lst.data.length === 11, 'list devuelve 11 movimientos');
 const res = post({ token, action: 'resumen', mes: key, usuario: 'Cami' });
 check(res.ok, 'resumen ok');
 const sup = res.data.compartido.find(x => x.nombre === 'Supermercado');

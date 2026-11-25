@@ -124,9 +124,17 @@ function leerConfig_() {
     padre: String(f[7]).trim(),
   })).sort((a, b) => a.orden - b.orden);
 
-  const formasPago = bloque(col('forma_pago'), 2)
-    .map(f => ({ nombre: String(f[0]).trim(), orden: num_(f[1]) }))
-    .sort((a, b) => a.orden - b.orden).map(f => f.nombre);
+  // Formas de pago: un orden por persona (orden_fran / orden_cami). Vacío = esa persona no la ve.
+  // Compatible con el formato viejo (una sola columna "orden" para los dos).
+  const filasFp = bloque(col('forma_pago'), 3);
+  const porPersona = cIdx => filasFp
+    .map(f => ({ nombre: String(f[0]).trim(), orden: f[cIdx] }))
+    .filter(x => String(x.orden).trim() !== '')
+    .sort((a, b) => num_(a.orden) - num_(b.orden)).map(x => x.nombre);
+  const formasPagoPorPersona = col('orden_fran') >= 0
+    ? { Fran: porPersona(1), Cami: col('orden_cami') >= 0 ? porPersona(2) : porPersona(1) }
+    : { Fran: porPersona(1), Cami: porPersona(1) };
+  const formasPago = formasPagoPorPersona.Fran;
 
   const reparto = {};
   bloque(col('reparto_categoria'), 3).forEach(f => {
@@ -136,7 +144,7 @@ function leerConfig_() {
   const parametros = {};
   bloque(col('clave'), 2).forEach(f => { parametros[String(f[0]).trim()] = f[1]; });
 
-  _cache.config = { categorias, formasPago, reparto, parametros };
+  _cache.config = { categorias, formasPago, formasPagoPorPersona, reparto, parametros };
   return _cache.config;
 }
 
@@ -217,6 +225,7 @@ function bootstrap_() {
   return {
     categorias: cfg.categorias,
     formasPago: cfg.formasPago,
+    formasPagoPorPersona: cfg.formasPagoPorPersona,
     reparto: cfg.reparto,
     pctIngresos: leerPctIngresos_(),
     tiposIngreso: tipos,

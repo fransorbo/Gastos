@@ -1,7 +1,7 @@
 /* Gastos F&C — PWA para cargar gastos e ingresos en Google Sheets. */
 'use strict';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 /* ============================ Utilidades ============================ */
 
@@ -78,7 +78,11 @@ const CONFIG_POR_DEFECTO = {
     ['IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', '🪑', 'oculta', ''],
   ].map(([categoria_app, categoria_excel, subcategoria_excel, fijo_o_variable, icono, mostrar, padre], i) =>
     ({ categoria_app, categoria_excel, subcategoria_excel, fijo_o_variable, icono, mostrar, padre, orden: i + 1 })),
-  formasPago: ['Cash', 'Santander', 'Revolut', 'Sabadell'],
+  formasPago: ['Santander', 'Revolut', 'Cash', 'Sabadell', 'Monedas'],
+  formasPagoPorPersona: {
+    Fran: ['Santander', 'Revolut', 'Cash', 'Sabadell', 'Monedas'],
+    Cami: ['Santander', 'Sabadell', 'Cash', 'Revolut'],
+  },
   reparto: { 'Alquiler': { fran: 1, cami: 0 }, 'Servicios de Casa': { fran: 1, cami: 0 } },
   pctIngresos: {},
   tiposIngreso: ['Sueldo', 'Paro', 'Extra-freelance', 'Reembolso-devolución'],
@@ -104,6 +108,31 @@ function repartoDefecto(cat, fecha) {
   const k = previas.length ? previas[previas.length - 1] : keys[keys.length - 1];
   return k ? pct[k] : { fran: 0.6, cami: 0.4 };
 }
+
+/** Formas de pago del perfil, en su orden (tab Config: orden_fran / orden_cami). */
+function formasDe(p) {
+  const pp = cfg.formasPagoPorPersona || CONFIG_POR_DEFECTO.formasPagoPorPersona;
+  return (pp[p] && pp[p].length ? pp[p] : cfg.formasPago) || [];
+}
+
+/* ---------- Cuotas ---------- */
+const CUOTAS_MIN = 2, CUOTAS_MAX = 48;
+
+/** Reparte el total en n cuotas en céntimos exactos; el resto de céntimos va a la primera. */
+function dividirCuotas(total, n) {
+  const cent = Math.round(total * 100);
+  const base = Math.floor(cent / n);
+  const out = Array(n).fill(base);
+  out[0] += cent - base * n;
+  return out.map(c => c / 100);
+}
+function sumarDias(fechaStr, dias) {
+  const [y, m, d] = fechaStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + dias));
+  return dt.toISOString().slice(0, 10);
+}
+const esCuota = m => /-c\d+$/.test(String(m.id || ''));
+const grupoCuota = m => String(m.id).replace(/-c\d+$/, '');
 
 /* ============================ API ============================ */
 
@@ -142,7 +171,9 @@ async function cargarConfig() {
 let f; // estado del formulario
 
 function nuevoForm(tipo = 'Gasto') {
-  const forma = LS.get('forma.' + (quien || 'x'), cfg.formasPago[0] || '');
+  const formas = formasDe(quien);
+  const recordada = LS.get('forma.' + (quien || 'x'), null);
+  const forma = formas.includes(recordada) ? recordada : (formas[0] || '');
   f = {
     id: null, creado_en: null, cargado_por: null,
     tipo,
@@ -153,6 +184,7 @@ function nuevoForm(tipo = 'Gasto') {
     pct_fran: 60, repartoManual: false,
     categoria_app: '',
     fijo_o_variable: 'Variable',
+    cuotas: 3,
     detalle: '',
     fecha: hoyStr(),
     tipo_ingreso: (cfg.tiposIngreso || [])[0] || 'Sueldo',
@@ -172,8 +204,6 @@ function categoriaPadre(nombre) {
 }
 
 function renderFormEstatico() {
-  $('#formas').innerHTML = cfg.formasPago.map(n =>
-    `<button type="button" class="chip" data-v="${esc(n)}">${esc(n)}</button>`).join('');
   $('#cats').innerHTML = cfg.categorias.filter(c => c.mostrar === 'chip').map(c =>
     `<button type="button" class="cat" data-v="${esc(c.categoria_app)}"><span class="ico">${esc(c.icono)}</span><span class="txt">${esc(c.categoria_app)}</span></button>`).join('');
   $('#tiposIngreso').innerHTML = (cfg.tiposIngreso || []).map(n =>
@@ -191,9 +221,19 @@ function pintarForm() {
   $('.solo-gasto').hidden = ingreso;
   $('.solo-ingreso').hidden = !ingreso;
   $('#importe').value = f.importe;
+  // Formas de pago del perfil (+ la del movimiento que se edita, si es de otra persona)
+  const formas = formasDe(quien).slice();
+  if (f.forma_pago && !formas.includes(f.forma_pago)) formas.push(f.forma_pago);
+  $('#formas').style.setProperty('--n', Math.min(Math.max(formas.length, 1), 5));
+  $('#formas').classList.toggle('muchas', formas.length >= 5);
+  $('#formas').innerHTML = formas.map(n =>
+    `<button type="button" class="chip" data-v="${esc(n)}">${esc(n)}</button>`).join('');
   marcar($('#formas'), f.forma_pago);
   marcar($('#segPC'), f.personal_o_compartido);
   marcar($('#segFV'), f.fijo_o_variable);
+  // Cuotas: solo al crear; al editar un gasto normal no se ofrece
+  $('#segFV [data-v="Cuotas"]').hidden = !!f.id && f.fijo_o_variable !== 'Cuotas';
+  pintarCuotas();
   const comp = f.personal_o_compartido === 'Compartido';
   $('#compartidoBox').hidden = !comp;
   if (!comp) $('#repartoEdit').hidden = true;
@@ -216,8 +256,42 @@ function pintarForm() {
   $('#detalle').placeholder = ingreso ? 'Detalle (opcional)' : 'Detalle (opcional)';
   $('#fecha').value = f.fecha;
   $('#editando').hidden = !f.id;
-  $('#guardar').textContent = f.id ? 'Guardar cambios' : 'Guardar';
+  $('#guardar').textContent = f.id ? 'Guardar cambios'
+    : (f.tipo === 'Gasto' && f.fijo_o_variable === 'Cuotas' ? `Guardar ${f.cuotas} cuotas` : 'Guardar');
+  pintarPerfil();
   sugerencias();
+}
+
+function pintarCuotas() {
+  const activo = f.tipo === 'Gasto' && f.fijo_o_variable === 'Cuotas' && !f.id;
+  $('#cuotasBox').hidden = !activo;
+  if (!activo) return;
+  $('#cuotasN').textContent = f.cuotas;
+  const total = parseImporte(f.importe);
+  if (!(total > 0)) { $('#cuotasResumen').textContent = 'Pon el precio total arriba'; return; }
+  const partes = dividirCuotas(total, f.cuotas);
+  const ultima = sumarDias(f.fecha, 30 * (f.cuotas - 1));
+  const iguales = partes.every(p => p === partes[partes.length - 1]);
+  $('#cuotasResumen').textContent = `${f.cuotas} × ${fmtEUR(partes[partes.length - 1])}${iguales ? '' : ' (1ª ' + fmtEUR(partes[0]) + ')'} · cada 30 días hasta el ${fmtCorta(ultima)}/${ultima.slice(2, 4)}`;
+  if (!f.id) $('#guardar').textContent = `Guardar ${f.cuotas} cuotas`;
+}
+
+function pintarPerfil() {
+  const p = $('#perfil');
+  p.textContent = quien ? quien[0] : '?';
+  p.classList.toggle('cami', quien === 'Cami');
+  p.setAttribute('aria-label', 'Perfil: ' + (quien || 'sin elegir') + ' (toca para cambiar)');
+}
+
+function cambiarPerfil(p) {
+  quien = p;
+  LS.set('quien', quien);
+  marcar($('#segQuien'), quien);
+  if (!f.id) { nuevoForm(f.tipo); }
+  pintarForm();
+  if (vistaActual === 'movs') renderMovs();
+  if (vistaActual === 'resumen') cargarResumen();
+  toast('Perfil de ' + quien);
 }
 
 async function sugerencias() {
@@ -264,7 +338,7 @@ function enlazarForm() {
   const elegirCat = v => {
     f.categoria_app = v;
     const c = catPorNombre(v);
-    if (c) f.fijo_o_variable = c.fijo_o_variable || 'Variable';
+    if (c && f.fijo_o_variable !== 'Cuotas') f.fijo_o_variable = c.fijo_o_variable || 'Variable';
     recalcularReparto();
   };
   seg('#cats', v => {
@@ -272,6 +346,13 @@ function enlazarForm() {
     elegirCat(v);
   });
   seg('#subcats', v => elegirCat(f.categoria_app === v ? categoriaPadre(v) : v));
+
+  const moverCuotas = d => {
+    f.cuotas = Math.min(CUOTAS_MAX, Math.max(CUOTAS_MIN, (f.cuotas || 3) + d));
+    pintarCuotas();
+  };
+  $('#cuotasMenos').addEventListener('click', () => moverCuotas(-1));
+  $('#cuotasMas').addEventListener('click', () => moverCuotas(1));
 
   $('#repartoBtn').addEventListener('click', () => { $('#repartoEdit').hidden = !$('#repartoEdit').hidden; });
   $('#rango').addEventListener('input', e => {
@@ -289,6 +370,7 @@ function enlazarForm() {
     if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/[.,]/g, '').slice(0, 2);
     e.target.value = v;
     f.importe = v;
+    pintarCuotas();
   });
   $('#importe').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
   $('#detalle').addEventListener('input', e => { f.detalle = e.target.value; });
@@ -334,8 +416,22 @@ async function guardar() {
   };
   const eraEdicion = !!f.id;
 
+  // Cuotas: una línea por cuota, la 1ª hoy y cada una 30 días después, ids <grupo>-c1..cN
+  let movs = [mov];
+  if (gasto && f.fijo_o_variable === 'Cuotas' && !eraEdicion) {
+    const n = f.cuotas;
+    const partes = dividirCuotas(importe, n);
+    const base = mov.detalle || mov.categoria_app;
+    movs = partes.map((imp, i) => Object.assign({}, mov, {
+      id: mov.id + '-c' + (i + 1),
+      fecha: sumarDias(f.fecha, 30 * i),
+      importe_eur: imp,
+      detalle: `${base} (cuota ${i + 1}/${n})`,
+    }));
+  }
+
   try {
-    await DB.put(mov);
+    for (const m of movs) await DB.put(m);
   } catch (err) {
     toast('No se pudo guardar en el móvil: ' + err.message, 4000);
     return;
@@ -349,7 +445,9 @@ async function guardar() {
   btn.classList.add('hecho');
   btn.textContent = '✓ Guardado';
   setTimeout(() => { btn.classList.remove('hecho'); pintarForm(); }, 700);
-  toast(`${gasto ? 'Gasto' : 'Ingreso'} de ${fmtEUR(importe)} guardado`);
+  toast(movs.length > 1
+    ? `${movs.length} cuotas de ${fmtEUR(movs[movs.length - 1].importe_eur)} guardadas`
+    : `${gasto ? 'Gasto' : 'Ingreso'} de ${fmtEUR(importe)} guardado`);
 
   nuevoForm(eraEdicion ? 'Gasto' : f.tipo);
   pintarForm();
@@ -371,6 +469,7 @@ function editar(mov) {
     repartoManual: true,
     categoria_app: mov.categoria_app || '',
     fijo_o_variable: mov.fijo_o_variable || 'Variable',
+    cuotas: 3,
     detalle: mov.detalle || '',
     fecha: String(mov.fecha).slice(0, 10),
     tipo_ingreso: mov.tipo_ingreso || 'Sueldo',
@@ -379,14 +478,19 @@ function editar(mov) {
   pintarForm();
 }
 
-async function borrar(mov) {
-  const borrado = Object.assign({}, mov, { estado: 'borrado', editado_en: new Date().toISOString(), _sync: 'pendiente' });
-  delete borrado._error;
-  // Siempre se manda al servidor (si nunca llegó, el servidor responde "no existía").
-  await DB.put(borrado);
-  recientes = recientes.filter(r => r.id !== mov.id);
+async function borrar(movOLista) {
+  const lista = Array.isArray(movOLista) ? movOLista : [movOLista];
+  const ahora = new Date().toISOString();
+  for (const mov of lista) {
+    const borrado = Object.assign({}, mov, { estado: 'borrado', editado_en: ahora, _sync: 'pendiente' });
+    delete borrado._error;
+    // Siempre se manda al servidor (si nunca llegó, el servidor responde "no existía").
+    await DB.put(borrado);
+  }
+  const ids = new Set(lista.map(m => m.id));
+  recientes = recientes.filter(r => !ids.has(r.id));
   LS.set('recientes', recientes);
-  toast('Borrado');
+  toast(lista.length > 1 ? `${lista.length} cuotas borradas` : 'Borrado');
   renderMovs();
   actualizarBadge();
   sincronizar();
@@ -514,6 +618,18 @@ async function refrescarMovs(avisar) {
 }
 
 let movSeleccionado = null;
+
+/** Las demás cuotas activas de la misma compra (cola local + lista del servidor). */
+async function otrasCuotas(m) {
+  const cola = await DB.all().catch(() => []);
+  const g = grupoCuota(m);
+  const vistos = new Set([m.id]);
+  return [...cola, ...recientes].filter(x => {
+    if (vistos.has(x.id) || x.estado === 'borrado' || !esCuota(x) || grupoCuota(x) !== g) return false;
+    vistos.add(x.id);
+    return true;
+  });
+}
 function abrirMov(m) {
   movSeleccionado = m;
   $('#dlgMovTexto').textContent = `${m.detalle || m.categoria_app || m.tipo_ingreso} · ${fmtEUR(m.importe_eur)} · ${fmtCorta(m.fecha)}`;
@@ -633,11 +749,7 @@ function enlazarAjustes() {
   $('#segQuien').addEventListener('click', e => {
     const b = e.target.closest('[data-v]');
     if (!b) return;
-    quien = b.dataset.v;
-    LS.set('quien', quien);
-    marcar($('#segQuien'), quien);
-    if (!f.id) { nuevoForm(f.tipo); pintarForm(); }
-    toast('Ahora eres ' + quien);
+    if (b.dataset.v !== quien) cambiarPerfil(b.dataset.v);
   });
   $('#guardarCfg').addEventListener('click', () => {
     LS.set('url', $('#cfgUrl').value.trim());
@@ -678,10 +790,24 @@ function enlazarGeneral() {
   });
   $('#dlgCerrar').addEventListener('click', () => $('#dlgMov').close());
   $('#dlgEditar').addEventListener('click', () => { $('#dlgMov').close(); editar(movSeleccionado); });
-  $('#dlgBorrar').addEventListener('click', () => {
+  $('#dlgBorrar').addEventListener('click', async () => {
     const m = movSeleccionado;
     $('#dlgMov').close();
-    if (confirm(`¿Borrar "${m.detalle || m.categoria_app || m.tipo_ingreso}" de ${fmtEUR(m.importe_eur)}?\nSe elimina también del sheet.`)) borrar(m);
+    if (!confirm(`¿Borrar "${m.detalle || m.categoria_app || m.tipo_ingreso}" de ${fmtEUR(m.importe_eur)}?\nSe elimina también del sheet.`)) return;
+    if (esCuota(m)) {
+      const otras = await otrasCuotas(m);
+      if (otras.length && confirm(`Es parte de una compra en cuotas.\n¿Borrar también las otras ${otras.length} cuotas?`)) {
+        borrar([m, ...otras]);
+        return;
+      }
+    }
+    borrar(m);
+  });
+  $('#perfil').addEventListener('click', () => {
+    if (!quien) return;
+    const otro = quien === 'Fran' ? 'Cami' : 'Fran';
+    if (f.id) { toast('Termina o cancela la edición antes de cambiar de perfil'); return; }
+    if (confirm(`¿Cambiar al perfil de ${otro}?`)) cambiarPerfil(otro);
   });
   $('#mesPrev').addEventListener('click', () => moverMes(-1));
   $('#mesNext').addEventListener('click', () => moverMes(1));

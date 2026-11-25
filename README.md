@@ -146,9 +146,16 @@ El `setup` ya instaló un **activador diario** sobre las 7:00 que ejecuta `gener
 
 ## 6. Uso diario
 
+**Perfiles:** arriba a la derecha aparece **F** (Fran) o **C** (Cami). Tócalo para cambiar de perfil en ese móvil. Cada perfil tiene sus formas de pago y su orden (ver sección 7). **Pagó** y **Quién lo recibe** vienen marcados con el nombre del perfil.
+
 **Cargar un gasto:** importe → (forma de pago, Personal/Compartido, ya vienen recordados) → **categoría** → **Guardar**.
 - **La forma de pago** y **Personal/Compartido** se recuerdan por persona.
 - **Fijo/Variable** se propone según la categoría.
+- **Cuotas:** elige **Cuotas** junto a Variable/Fijo, pon el **precio total** y ajusta el contador (− / ＋).
+  - **Qué se genera:** una línea por cuota. La 1ª con la fecha del gasto y cada una de las siguientes 30 días después.
+  - **Ejemplo:** una mesa de 300 € en 3 cuotas da 3 líneas de 100 €. Si no divide exacto, los céntimos de más van a la 1ª.
+  - **Cómo se ven en el sheet:** el detalle queda como "Mesa (cuota 2/3)" y `fijo_o_variable` como `Cuotas`. Cada cuota cae en el mes de su fecha en las tabs Detalle.
+  - **Borrar:** al borrar una cuota, la app pregunta si borrar también las demás.
 - **En un gasto compartido** eliges quién pagó. El reparto se rellena solo; tócalo (`F 60% · C 40%`) para cambiarlo en ese gasto.
 - **Transporte** tiene una opción pequeña, **Uber/taxi**, que va a la subcategoría `Uber,etc`.
 - **El detalle** sugiere los últimos que usaste en esa categoría.
@@ -176,7 +183,7 @@ El `setup` ya instaló un **activador diario** sobre las 7:00 que ejecuta `gener
 | Columnas | Para qué |
 |---|---|
 | **A–H** `categoria_app …` | Categorías de la app. `mostrar`: `chip` (botón), `sub` (opción pequeña bajo su `padre`), `oculta` (solo para Fijos, como *IKEA cuotas*). `orden` define la posición. |
-| **J–K** `forma_pago`, `orden` | Botones de forma de pago. |
+| **J–L** `forma_pago`, `orden_fran`, `orden_cami` | Botones de forma de pago **por perfil**, en ese orden. Si una persona tiene la celda vacía, no ve esa forma de pago (hoy Cami no ve *Monedas*). |
 | **M–O** `reparto_categoria`, `pct_fran`, `pct_cami` | Excepciones al reparto por ingresos. **Borra las filas** cuando Alquiler y Servicios dejen de ser 100 % Fran. |
 | **Q–R** `clave`, `valor` | `tipos_ingreso` (separados por comas) y `reparto_defecto_fran`, que se usa solo si `Ingresos` no tiene ningún dato. |
 

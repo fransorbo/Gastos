@@ -58,8 +58,9 @@ const CONFIG_CATEGORIAS_INICIALES = [
   ['IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', 16, '🪑', 'oculta', ''],
 ];
 
+// forma_pago, orden_fran, orden_cami  (vacío = esa persona no la ve)
 const CONFIG_FORMAS_PAGO_INICIALES = [
-  ['Cash', 1], ['Santander', 2], ['Revolut', 3], ['Sabadell', 4],
+  ['Santander', 1, 1], ['Revolut', 2, 4], ['Cash', 3, 3], ['Sabadell', 4, 2], ['Monedas', 5, ''],
 ];
 
 // categoria_app, pct_fran, pct_cami  (excepciones a la regla "según ingresos")

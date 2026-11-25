@@ -65,8 +65,9 @@ const CONFIG_CATEGORIAS_INICIALES = [
   ['IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', 16, '🪑', 'oculta', ''],
 ];
 
+// forma_pago, orden_fran, orden_cami  (vacío = esa persona no la ve)
 const CONFIG_FORMAS_PAGO_INICIALES = [
-  ['Cash', 1], ['Santander', 2], ['Revolut', 3], ['Sabadell', 4],
+  ['Santander', 1, 1], ['Revolut', 2, 4], ['Cash', 3, 3], ['Sabadell', 4, 2], ['Monedas', 5, ''],
 ];
 
 // categoria_app, pct_fran, pct_cami  (excepciones a la regla "según ingresos")
@@ -218,9 +219,17 @@ function leerConfig_() {
     padre: String(f[7]).trim(),
   })).sort((a, b) => a.orden - b.orden);
 
-  const formasPago = bloque(col('forma_pago'), 2)
-    .map(f => ({ nombre: String(f[0]).trim(), orden: num_(f[1]) }))
-    .sort((a, b) => a.orden - b.orden).map(f => f.nombre);
+  // Formas de pago: un orden por persona (orden_fran / orden_cami). Vacío = esa persona no la ve.
+  // Compatible con el formato viejo (una sola columna "orden" para los dos).
+  const filasFp = bloque(col('forma_pago'), 3);
+  const porPersona = cIdx => filasFp
+    .map(f => ({ nombre: String(f[0]).trim(), orden: f[cIdx] }))
+    .filter(x => String(x.orden).trim() !== '')
+    .sort((a, b) => num_(a.orden) - num_(b.orden)).map(x => x.nombre);
+  const formasPagoPorPersona = col('orden_fran') >= 0
+    ? { Fran: porPersona(1), Cami: col('orden_cami') >= 0 ? porPersona(2) : porPersona(1) }
+    : { Fran: porPersona(1), Cami: porPersona(1) };
+  const formasPago = formasPagoPorPersona.Fran;
 
   const reparto = {};
   bloque(col('reparto_categoria'), 3).forEach(f => {
@@ -230,7 +239,7 @@ function leerConfig_() {
   const parametros = {};
   bloque(col('clave'), 2).forEach(f => { parametros[String(f[0]).trim()] = f[1]; });
 
-  _cache.config = { categorias, formasPago, reparto, parametros };
+  _cache.config = { categorias, formasPago, formasPagoPorPersona, reparto, parametros };
   return _cache.config;
 }
 
@@ -311,6 +320,7 @@ function bootstrap_() {
   return {
     categorias: cfg.categorias,
     formasPago: cfg.formasPago,
+    formasPagoPorPersona: cfg.formasPagoPorPersona,
     reparto: cfg.reparto,
     pctIngresos: leerPctIngresos_(),
     tiposIngreso: tipos,
@@ -422,7 +432,7 @@ function normalizar_(it, ahora) {
   rec.categoria_app = cat.categoria_app;
   rec.categoria_excel = cat.categoria_excel;
   rec.subcategoria_excel = cat.subcategoria_excel;
-  rec.fijo_o_variable = it.fijo_o_variable === 'Fijo' || it.fijo_o_variable === 'Variable'
+  rec.fijo_o_variable = ['Fijo', 'Variable', 'Cuotas'].indexOf(it.fijo_o_variable) >= 0
     ? it.fijo_o_variable : cat.fijo_o_variable;
   rec.personal_o_compartido = it.personal_o_compartido === 'Compartido' ? 'Compartido' : 'Personal';
   rec.pagado_por = personas.indexOf(it.pagado_por) >= 0 ? it.pagado_por : (cargado === 'Auto' ? 'Fran' : cargado);
@@ -847,7 +857,7 @@ function crearConfig_(log) {
   const sh = ss.insertSheet(TAB.CONFIG, ss.getNumSheets());
   const bloques = [
     { col: 1, head: ['categoria_app', 'categoria_excel', 'subcategoria_excel', 'fijo_o_variable', 'orden', 'icono', 'mostrar', 'padre'], rows: CONFIG_CATEGORIAS_INICIALES },
-    { col: 10, head: ['forma_pago', 'orden'], rows: CONFIG_FORMAS_PAGO_INICIALES },
+    { col: 10, head: ['forma_pago', 'orden_fran', 'orden_cami'], rows: CONFIG_FORMAS_PAGO_INICIALES },
     { col: 13, head: ['reparto_categoria', 'pct_fran', 'pct_cami'], rows: CONFIG_REPARTO_INICIAL },
     { col: 17, head: ['clave', 'valor'], rows: CONFIG_PARAMETROS_INICIALES },
   ];

@@ -100,7 +100,7 @@ function normalizar_(it, ahora) {
   rec.categoria_app = cat.categoria_app;
   rec.categoria_excel = cat.categoria_excel;
   rec.subcategoria_excel = cat.subcategoria_excel;
-  rec.fijo_o_variable = it.fijo_o_variable === 'Fijo' || it.fijo_o_variable === 'Variable'
+  rec.fijo_o_variable = ['Fijo', 'Variable', 'Cuotas'].indexOf(it.fijo_o_variable) >= 0
     ? it.fijo_o_variable : cat.fijo_o_variable;
   rec.personal_o_compartido = it.personal_o_compartido === 'Compartido' ? 'Compartido' : 'Personal';
   rec.pagado_por = personas.indexOf(it.pagado_por) >= 0 ? it.pagado_por : (cargado === 'Auto' ? 'Fran' : cargado);

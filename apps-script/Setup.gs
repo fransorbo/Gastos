@@ -84,7 +84,7 @@ function crearConfig_(log) {
   const sh = ss.insertSheet(TAB.CONFIG, ss.getNumSheets());
   const bloques = [
     { col: 1, head: ['categoria_app', 'categoria_excel', 'subcategoria_excel', 'fijo_o_variable', 'orden', 'icono', 'mostrar', 'padre'], rows: CONFIG_CATEGORIAS_INICIALES },
-    { col: 10, head: ['forma_pago', 'orden'], rows: CONFIG_FORMAS_PAGO_INICIALES },
+    { col: 10, head: ['forma_pago', 'orden_fran', 'orden_cami'], rows: CONFIG_FORMAS_PAGO_INICIALES },
     { col: 13, head: ['reparto_categoria', 'pct_fran', 'pct_cami'], rows: CONFIG_REPARTO_INICIAL },
     { col: 17, head: ['clave', 'valor'], rows: CONFIG_PARAMETROS_INICIALES },
   ];

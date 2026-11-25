@@ -18,7 +18,10 @@
 <body>
   <header class="top">
     <span id="titulo">Cargar</span>
-    <button id="syncBadge" class="sync-badge" hidden></button>
+    <div class="top-der">
+      <button id="syncBadge" class="sync-badge" hidden></button>
+      <button id="perfil" class="perfil" aria-label="Perfil actual (toca para cambiar)">?</button>
+    </div>
   </header>
 
   <main>
@@ -39,7 +42,7 @@
           <span>€</span>
         </label>
 
-        <div class="chips chips-4" id="formas" aria-label="Forma de pago"></div>
+        <div class="chips" id="formas" aria-label="Forma de pago"></div>
 
         <!-- Solo gasto -->
         <div class="solo-gasto">
@@ -48,9 +51,10 @@
               <button type="button" data-v="Personal" class="on">Personal</button>
               <button type="button" data-v="Compartido">Compartido</button>
             </div>
-            <div class="seg" id="segFV">
+            <div class="seg seg-fv" id="segFV">
               <button type="button" data-v="Variable" class="on">Variable</button>
               <button type="button" data-v="Fijo">Fijo</button>
+              <button type="button" data-v="Cuotas">Cuotas</button>
             </div>
           </div>
 
@@ -66,6 +70,15 @@
             <span>Fran <b id="rFran">60</b>%</span>
             <input type="range" id="rango" min="0" max="100" step="5" value="60" aria-label="Porcentaje de Fran">
             <span>Cami <b id="rCami">40</b>%</span>
+          </div>
+
+          <div id="cuotasBox" class="cuotas" hidden>
+            <div class="contador">
+              <button type="button" id="cuotasMenos" aria-label="Una cuota menos">−</button>
+              <span><b id="cuotasN">3</b> cuotas</span>
+              <button type="button" id="cuotasMas" aria-label="Una cuota más">＋</button>
+            </div>
+            <span id="cuotasResumen" class="mini"></span>
           </div>
 
           <div class="cats" id="cats" aria-label="Categoría"></div>
