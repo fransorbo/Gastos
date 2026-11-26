@@ -63,7 +63,13 @@ class H(SimpleHTTPRequestHandler):
             return self._send({'ok': True, 'data': l})
         if a == 'resumen':
             return self._send({'ok': True, 'data': {'mes': body['mes'], 'usuario': body['usuario'],
-                'compartido': [{'nombre': 'Alquiler', 'icono': '🏠', 'gastado': 1055, 'ppto': 1055}, {'nombre': 'Supermercado', 'icono': '🛒', 'gastado': 280, 'ppto': 300}, {'nombre': 'Salidas', 'icono': '🍻', 'gastado': 95, 'ppto': 70}, {'nombre': 'Viaje', 'icono': '✈️', 'gastado': 0, 'ppto': 250}],
+                'compartido': [
+                    {'nombre': 'Alquiler', 'icono': '🏠', 'categoria_excel': 'Vivienda_y_Servicios', 'subcategoria_excel': 'Alquiler', 'gastado': 1055, 'ppto': 1055, 'movimientos': [{'id': '', 'detalle': 'alquiler', 'importe': 1055, 'fecha': '', 'cargado_por': ''}]},
+                    {'nombre': 'Supermercado', 'icono': '🛒', 'categoria_excel': 'Alimentación', 'subcategoria_excel': 'Supermercado', 'gastado': 280, 'ppto': 300, 'movimientos': [
+                        {'id': m['id'], 'detalle': (m.get('detalle') or 'Supermercado') + ' [' + m.get('forma_pago', '') + ']', 'importe': m['importe_eur'], 'fecha': m['fecha'], 'cargado_por': m['cargado_por']} for m in STATE['movs'].values() if m.get('estado') != 'borrado' and m.get('categoria_app') == 'Supermercado'
+                    ] + [{'id': '', 'detalle': 'EFECTIVO SUPERMERCADOS APROX', 'importe': 200, 'fecha': '', 'cargado_por': ''}]},
+                    {'nombre': 'Food & Drinks', 'icono': '🍻', 'categoria_excel': 'Ocio_y_Entretenimiento', 'subcategoria_excel': 'Food & Drinks', 'gastado': 95, 'ppto': 70, 'movimientos': [{'id': '', 'detalle': 'cena', 'importe': 95, 'fecha': '', 'cargado_por': ''}]},
+                    {'nombre': 'Viajes', 'icono': '✈️', 'categoria_excel': 'Viajes_Eventos_Otros', 'subcategoria_excel': 'Viajes', 'gastado': 0, 'ppto': 250, 'movimientos': []}],
                 'personal': [{'nombre': 'Ropa', 'icono': '👕', 'gastado': 45, 'ppto': 100}],
                 'totales': {'compartido': 1430, 'compartidoPpto': 1675, 'personal': 45, 'personalPpto': 100, 'ingresos': 4844, 'ingresosUsuario': 2900}}})
         if a == 'fijos': return self._send({'ok': True, 'data': STATE['fijos']})

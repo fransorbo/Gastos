@@ -1,7 +1,7 @@
 /* Gastos F&C — PWA para cargar gastos e ingresos en Google Sheets. */
 'use strict';
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 
 /* ============================ Utilidades ============================ */
 
@@ -531,7 +531,8 @@ async function borrar(movOLista) {
   toast(lista.length > 1 ? `${lista.length} cuotas borradas` : 'Borrado');
   renderMovs();
   actualizarBadge();
-  sincronizar();
+  await sincronizar();
+  if (vistaActual === 'resumen') cargarResumen();
 }
 
 /* ============================ Sincronización ============================ */
@@ -702,17 +703,34 @@ async function cargarResumen() {
   }
 }
 
+// Filas del resumen desplegadas (se mantienen al refrescar o volver a pintar)
+const resumenAbiertas = new Set();
+let resumenMovs = {}; // id de fila del detalle → movimiento
+
 function pintarResumen(d, desdeCache) {
   const t = d.totales;
-  const barras = filas => {
+  resumenMovs = {};
+  const barras = (filas, seccion) => {
     if (!filas.length) return '<p class="vacio">Sin gastos ni presupuesto este mes.</p>';
     return '<div class="barras">' + filas.map(r => {
       const pct = r.ppto > 0 ? r.gastado / r.ppto : (r.gastado > 0 ? 1.01 : 0);
       const cls = pct > 1 ? 'over' : pct > 0.85 ? 'warn' : '';
       const ancho = Math.min(100, Math.round(pct * 100));
-      return `<div class="row"><div class="top2"><span class="n">${esc(r.icono || '')} ${esc(r.nombre)}</span>
-        <span class="m"><b>${fmtEUR(r.gastado)}</b>${r.ppto ? ' / ' + fmtEUR(r.ppto) : ''}</span></div>
-        <div class="bar"><i class="${cls}" style="width:${ancho}%"></i></div></div>`;
+      const movs = r.movimientos || [];
+      const clave = seccion + '|' + r.categoria_excel + '|' + r.subcategoria_excel;
+      const abierta = movs.length && resumenAbiertas.has(clave);
+      const detalle = !movs.length ? '' : `<ul class="det"${abierta ? '' : ' hidden'}>` + movs.map((m, i) => {
+        const ref = clave + '#' + i;
+        resumenMovs[ref] = m;
+        const quien = m.fecha ? `${fmtCorta(m.fecha)} · ${esc(m.cargado_por)}` : 'a mano';
+        return `<li data-ref="${esc(ref)}" class="${m.id ? 'editable' : ''}">
+          <span class="dd"><span class="dt">${esc(m.detalle || r.nombre)}</span><span class="dq">${quien}</span></span>
+          <span class="di">${fmtEUR(m.importe)}</span></li>`;
+      }).join('') + '</ul>';
+      return `<div class="row${movs.length ? ' tap' : ''}${abierta ? ' abierta' : ''}" data-clave="${esc(clave)}">
+        <div class="top2"><span class="n">${esc(r.icono || '')} ${esc(r.nombre)}${movs.length ? ` <span class="cnt">${movs.length}</span>` : ''}</span>
+        <span class="m"><b>${fmtEUR(r.gastado)}</b>${r.ppto ? ' / ' + fmtEUR(r.ppto) : ''}${movs.length ? '<span class="chev">›</span>' : ''}</span></div>
+        <div class="bar"><i class="${cls}" style="width:${ancho}%"></i></div>${detalle}</div>`;
     }).join('') + '</div>';
   };
   $('#resumen').innerHTML = `
@@ -721,8 +739,8 @@ function pintarResumen(d, desdeCache) {
       <div class="tot"><div class="k">Personales (${esc(d.usuario)})</div><div class="v">${fmtEUR(t.personal)}</div><div class="p">de ${fmtEUR(t.personalPpto)}</div></div>
       <div class="tot"><div class="k">Ingresos</div><div class="v">${fmtEUR(t.ingresos)}</div><div class="p">tuyos ${fmtEUR(t.ingresosUsuario)}</div></div>
     </div>
-    <div class="bloque"><h3>Compartido</h3>${barras(d.compartido)}</div>
-    <div class="bloque"><h3>Personal de ${esc(d.usuario)}</h3>${barras(d.personal)}</div>
+    <div class="bloque"><h3>Compartido</h3>${barras(d.compartido, 'c')}</div>
+    <div class="bloque"><h3>Personal de ${esc(d.usuario)}</h3>${barras(d.personal, 'p')}</div>
     ${desdeCache ? '<p class="vacio">Mostrando la última versión guardada…</p>' : ''}`;
 }
 
@@ -861,6 +879,25 @@ function enlazarGeneral() {
   });
   $('#mesPrev').addEventListener('click', () => moverMes(-1));
   $('#mesNext').addEventListener('click', () => moverMes(1));
+  $('#resumen').addEventListener('click', async e => {
+    const li = e.target.closest('li[data-ref]');
+    if (li) {
+      const m = resumenMovs[li.dataset.ref];
+      if (!m || !m.id) { toast('Cargado a mano en el sheet: edítalo allí'); return; }
+      const cola = await DB.all().catch(() => []);
+      const mov = cola.find(x => x.id === m.id) || recientes.find(x => x.id === m.id);
+      if (mov) abrirMov(mov);
+      else toast('Actualiza la lista en Movimientos para editarlo');
+      return;
+    }
+    const row = e.target.closest('.row.tap');
+    if (!row) return;
+    const det = row.querySelector('.det');
+    const abrir = det.hidden;
+    det.hidden = !abrir;
+    row.classList.toggle('abierta', abrir);
+    if (abrir) resumenAbiertas.add(row.dataset.clave); else resumenAbiertas.delete(row.dataset.clave);
+  });
   $('#listaFijos').addEventListener('change', async e => {
     const inp = e.target.closest('input[data-fila]');
     if (!inp) return;

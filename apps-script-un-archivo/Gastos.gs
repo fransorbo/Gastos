@@ -664,19 +664,40 @@ function resumenMes_(mes, usuario) {
     if (!etiquetas[k]) etiquetas[k] = { nombre: c.categoria_app, icono: c.icono };
   });
 
+  // Movimientos de la app (para dar fecha exacta y quién cargó cada fila copiada en las tabs Detalle)
+  const movs = {};
+  const shMov = hoja_(TAB.MOVIMIENTOS);
+  const lastMov = shMov.getLastRow();
+  const filasMov = lastMov >= 2 ? shMov.getRange(2, 1, lastMov - 1, MOV_COLS.length).getValues().map(filaAObjeto_) : [];
+  filasMov.forEach(o => { if (o.id) movs[o.id] = o; });
+
   const sumar = nombreTab => {
     const acc = {};
     const sh = hoja_(nombreTab);
     const last = sh.getLastRow();
     if (last < 2) return acc;
-    sh.getRange(2, 1, last - 1, 7).getValues().forEach(f => {
+    const idCol = colIdApp_(sh);
+    sh.getRange(2, 1, last - 1, Math.max(7, idCol)).getValues().forEach(f => {
       let y = Number(f[5]), m = Number(f[6]);
       if ((!y || !m) && f[3] instanceof Date) { y = f[3].getFullYear(); m = f[3].getMonth() + 1; }
       if (y !== anio || m !== nMes) return;
       const k = norm_(f[0]) + '|' + norm_(f[1]);
-      if (!acc[k]) acc[k] = { categoria_excel: String(f[0]).trim(), subcategoria_excel: String(f[1]).trim(), gastado: 0 };
-      acc[k].gastado += num_(f[4]);
+      if (!acc[k]) acc[k] = { categoria_excel: String(f[0]).trim(), subcategoria_excel: String(f[1]).trim(), gastado: 0, movimientos: [] };
+      const importe = num_(f[4]);
+      acc[k].gastado += importe;
+      const id = String(f[idCol - 1] || '').trim();
+      const mv = id ? movs[id] : null;
+      acc[k].movimientos.push({
+        id: mv ? id : '',
+        detalle: String(f[2] || '').trim(),
+        importe: Math.round(importe * 100) / 100,
+        fecha: mv ? mv.fecha : '',               // vacío = cargado a mano en el sheet (solo tiene el mes)
+        cargado_por: mv ? mv.cargado_por : '',
+        pagado_por: mv ? mv.pagado_por : '',
+      });
     });
+    Object.keys(acc).forEach(k => acc[k].movimientos.sort((a, b) =>
+      String(b.fecha).localeCompare(String(a.fecha)) || b.importe - a.importe));
     return acc;
   };
 
@@ -695,6 +716,7 @@ function resumenMes_(mes, usuario) {
         icono: et ? et.icono : '',
         gastado: Math.round((g ? g.gastado : 0) * 100) / 100,
         ppto: p ? p[campoPpto] : 0,
+        movimientos: g ? g.movimientos : [],
       };
     });
     filas.sort((a, b) => b.gastado - a.gastado || b.ppto - a.ppto);
@@ -708,16 +730,11 @@ function resumenMes_(mes, usuario) {
 
   // Ingresos del mes (desde Movimientos)
   let ingresosTotal = 0, ingresosUsuario = 0;
-  const sh = hoja_(TAB.MOVIMIENTOS);
-  const last = sh.getLastRow();
-  if (last >= 2) {
-    sh.getRange(2, 1, last - 1, MOV_COLS.length).getValues().forEach(f => {
-      const o = filaAObjeto_(f);
-      if (o.tipo !== 'Ingreso' || o.estado === 'borrado' || o.fecha.slice(0, 7) !== mes) return;
-      ingresosTotal += num_(o.importe_eur);
-      if (o.pagado_por === usuario) ingresosUsuario += num_(o.importe_eur);
-    });
-  }
+  filasMov.forEach(o => {
+    if (o.tipo !== 'Ingreso' || o.estado === 'borrado' || o.fecha.slice(0, 7) !== mes) return;
+    ingresosTotal += num_(o.importe_eur);
+    if (o.pagado_por === usuario) ingresosUsuario += num_(o.importe_eur);
+  });
 
   return {
     mes, usuario,

@@ -140,6 +140,10 @@ print('  compartido: ' + JSON.stringify(res.data.compartido.map(x => [x.nombre, 
 print('  personal: ' + JSON.stringify(res.data.personal.map(x => [x.nombre, x.gastado, x.ppto])));
 print('  totales: ' + JSON.stringify(res.data.totales));
 check(sup.gastado === 50 + 31.5 && sup.ppto === 300, 'resumen suma Supermercado del mes (incluye filas manuales) vs PPTO');
+check(sup.movimientos.length === 4, 'Supermercado trae sus 4 movimientos (1 manual + 3 de la app)');
+check(sup.movimientos.filter(x => x.fecha === key + '-05' && x.cargado_por === 'Cami' && x.id).length === 3, 'los de la app traen fecha exacta, quién cargó e id');
+check(sup.movimientos.some(x => !x.fecha && !x.id && x.detalle === 'Mercadona' && x.importe === 50), 'la fila manual aparece sin fecha (a mano)');
+check(Math.round(sup.movimientos.reduce((s, x) => s + x.importe, 0) * 100) / 100 === sup.gastado, 'los movimientos suman lo gastado');
 const fj = post({ token, action: 'fijos' });
 check(fj.ok && fj.data.length === 5 && fj.data.every(x => !x.activo), '5 fijos precargados desactivados');
 const tg = post({ token, action: 'fijoToggle', fila: 2, activo: true });

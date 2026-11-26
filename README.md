@@ -169,7 +169,7 @@ El `setup` ya instaló un **activador diario** sobre las 7:00 que ejecuta `gener
 - **Editar** actualiza `Movimientos` y la fila copiada. Si cambias de Personal a Compartido, la mueve de tab.
 - **Borrar** marca `estado = borrado` en `Movimientos` y **elimina** la fila de la tab destino.
 
-**Resumen:** gastado en el mes por categoría vs `PPTO`. Muestra lo compartido y tu personal por separado, más los totales del mes. Se cambia de mes con ‹ y ›. Lee las tabs Detalle, así que incluye también lo que cargues a mano en el sheet.
+**Resumen:** gastado en el mes por categoría vs `PPTO`. **Toca una fila** para ver sus movimientos del mes: los cargados con la app muestran fecha y quién los cargó, y se pueden editar o borrar tocándolos; los cargados a mano en el sheet aparecen como "a mano". Muestra lo compartido y tu personal por separado, más los totales del mes. Se cambia de mes con ‹ y ›. Lee las tabs Detalle, así que incluye también lo que cargues a mano en el sheet.
 
 **Fijos:** activa o desactiva los gastos fijos. Para cambiar importes, días u otros datos, edita la tab **Fijos** del sheet. **Antes de activar**, revisa los importes y quién paga. Los 5 de ejemplo están como *Compartido, pagó Fran*.
 - **Cuándo se crean:** a partir del `dia_del_mes`, una vez por mes y por fijo, con `cargado_por = Auto` e id `fijo-<fila>-<AAAA-MM>`.
