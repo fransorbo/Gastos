@@ -1,6 +1,6 @@
 /* Service worker: la app abre al instante y sin conexión (stale-while-revalidate).
    Al publicar cambios, sube VERSION para forzar la actualización. */
-const VERSION = 'gfc-v1.1.1';
+const VERSION = 'gfc-v1.2.0';
 const ARCHIVOS = [
   './', 'index.html', 'styles.css', 'app.js', 'db.js', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',

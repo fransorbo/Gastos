@@ -73,7 +73,8 @@ print('== doPost');
 const post = body => JSON.parse(doPost({ postData: { contents: JSON.stringify(body) } }).s);
 check(post({ token: 'malo', action: 'bootstrap' }).ok === false, 'token incorrecto rechazado');
 const boot = post({ token, action: 'bootstrap' });
-check(boot.ok && boot.data.categorias.length === 16, 'bootstrap devuelve 16 categorías');
+check(boot.ok && boot.data.categorias.length === 31, 'bootstrap devuelve 7 grupos + 24 subcategorías');
+check(boot.data.categorias.filter(c => c.mostrar === 'grupo').map(c => c.categoria_app).join(',') === 'Vivienda,Alimentación,Transporte,Cuidado personal,Educación,Ocio,Viajes y otros', 'los 7 grupos en orden');
 check(JSON.stringify(boot.data.formasPagoPorPersona.Fran) === '["Santander","Revolut","Cash","Sabadell","Monedas"]', 'formas de pago de Fran en su orden');
 check(JSON.stringify(boot.data.formasPagoPorPersona.Cami) === '["Santander","Sabadell","Cash","Revolut"]', 'formas de pago de Cami en su orden, sin Monedas');
 // Formato viejo de Config (una sola columna "orden"): ambos ven la misma lista
@@ -112,6 +113,17 @@ const manual = post({ token, action: 'sync', items: [{ id: 'man', cargado_por: '
 check(filaAObjeto_(mov.getRange(9, 1, 1, MOV_COLS.length).getValues()[0]).pct_fran === 0.5, 'reparto manual 50/50 respetado');
 const malo = post({ token, action: 'sync', items: [{ id: 'bad', cargado_por: 'Fran', tipo: 'Gasto', fecha: key + '-01', importe_eur: 5, categoria_app: 'Inventada' }] });
 check(malo.ok && malo.data[0].ok === false, 'categoría desconocida → error por item, no rompe el lote');
+check(filaAObjeto_(mov.getRange(9, 1, 1, MOV_COLS.length).getValues()[0]).categoria_app === 'Food & Drinks', 'alias viejo "Salidas" se guarda como "Food & Drinks"');
+{
+  const g = post({ token, action: 'sync', items: [{ id: 'grp', cargado_por: 'Fran', tipo: 'Gasto', fecha: key + '-01', importe_eur: 5, categoria_app: 'Vivienda', personal_o_compartido: 'Personal' }] });
+  check(g.data[0].ok === false, 'un grupo (Vivienda) no se puede guardar sin subcategoría');
+  const ed = post({ token, action: 'sync', items: [{ id: 'edu', cargado_por: 'Fran', tipo: 'Gasto', fecha: key + '-01', importe_eur: 5, categoria_app: 'Educación', personal_o_compartido: 'Personal', estado: 'activo' }] });
+  check(ed.data[0].ok, 'subcategoría Educación (mismo nombre que su grupo) se acepta');
+  const sv = post({ token, action: 'sync', items: [{ id: 'srv', cargado_por: 'Cami', tipo: 'Gasto', fecha: key + '-01', importe_eur: 60, categoria_app: 'Servicios', personal_o_compartido: 'Compartido', pagado_por: 'Fran' }] });
+  const filaSrv = filaAObjeto_(mov.getRange(mov.getLastRow(), 1, 1, MOV_COLS.length).getValues()[0]);
+  check(sv.data[0].ok && filaSrv.pct_fran === 1, 'Servicios sigue al 100% Fran');
+  post({ token, action: 'sync', items: [{ id: 'edu', estado: 'borrado', editado_en: '2099-01-01T00:00:00Z' }, { id: 'srv', estado: 'borrado', editado_en: '2099-01-01T00:00:00Z' }] });
+}
 
 const cu = post({ token, action: 'sync', items: [1, 2, 3].map(i => ({ id: 'cuo-c' + i, cargado_por: 'Fran', tipo: 'Gasto', fecha: key + '-0' + i, importe_eur: 100, categoria_app: 'Hogar', detalle: 'Mesa (cuota ' + i + '/3)', personal_o_compartido: 'Personal', pagado_por: 'Fran', fijo_o_variable: 'Cuotas' })) });
 check(cu.data.every(x => x.ok && x.destino.indexOf('Gastos Fran!') === 0), 'cuotas se copian a Gastos Fran');

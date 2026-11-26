@@ -157,7 +157,7 @@ El `setup` ya instaló un **activador diario** sobre las 7:00 que ejecuta `gener
   - **Cómo se ven en el sheet:** el detalle queda como "Mesa (cuota 2/3)" y `fijo_o_variable` como `Cuotas`. Cada cuota cae en el mes de su fecha en las tabs Detalle.
   - **Borrar:** al borrar una cuota, la app pregunta si borrar también las demás.
 - **En un gasto compartido** eliges quién pagó. El reparto se rellena solo; tócalo (`F 60% · C 40%`) para cambiarlo en ese gasto.
-- **Transporte** tiene una opción pequeña, **Uber/taxi**, que va a la subcategoría `Uber,etc`.
+- **Categoría en dos pasos:** primero tocas una de las 7 categorías (Vivienda, Alimentación, Transporte, Cuidado personal, Educación, Ocio, Viajes y otros) y después su **subcategoría**, que es la que se guarda. Si la categoría tiene una sola subcategoría (Educación), se elige sola.
 - **El detalle** sugiere los últimos que usaste en esa categoría.
 - **Un gasto personal** va a `Detalle Camila` o a `Gastos Fran` según quién eres en ese móvil.
 
@@ -182,14 +182,14 @@ El `setup` ya instaló un **activador diario** sobre las 7:00 que ejecuta `gener
 
 | Columnas | Para qué |
 |---|---|
-| **A–H** `categoria_app …` | Categorías de la app. `mostrar`: `chip` (botón), `sub` (opción pequeña bajo su `padre`), `oculta` (solo para Fijos, como *IKEA cuotas*). `orden` define la posición. |
+| **A–H** `categoria_app …` | Categorías en dos niveles. Filas con `mostrar = grupo`: los 7 botones grandes (`categoria_app` es el nombre corto que se ve y `categoria_excel` el nombre completo). Filas con `mostrar = sub`: las subcategorías; `padre` es el nombre corto de su grupo y `categoria_app` es lo que se guarda. `oculta`: existe pero no se muestra. `orden` define la posición. |
 | **J–L** `forma_pago`, `orden_fran`, `orden_cami` | Botones de forma de pago **por perfil**, en ese orden. Si una persona tiene la celda vacía, no ve esa forma de pago (hoy Cami no ve *Monedas*). |
 | **M–O** `reparto_categoria`, `pct_fran`, `pct_cami` | Excepciones al reparto por ingresos. **Borra las filas** cuando Alquiler y Servicios dejen de ser 100 % Fran. |
 | **Q–R** `clave`, `valor` | `tipos_ingreso` (separados por comas) y `reparto_defecto_fran`, que se usa solo si `Ingresos` no tiene ningún dato. |
 
 Después de cambiar `Config`, en la app ve a **Ajustes → Recargar configuración**. La app también la recarga sola cada vez que se abre con internet.
 
-**Añadir una categoría nueva** (por ejemplo *Café*): añade una fila con `Café | Ocio_y_Entretenimiento | Cafe | Variable | 16 | ☕ | chip |`. La pareja Categoria Principal + Subcategoría debe existir en `PPTO`/`map` para que aparezca en el resumen.
+**Añadir una subcategoría nueva** (por ejemplo *Mascotas* dentro de Vivienda): añade una fila con `Mascotas | Vivienda_y_Servicios | Mascotas | Variable | 18 | 🐶 | sub | Vivienda`. La pareja Categoria Principal + Subcategoría debe existir en `PPTO`/`map` para que aparezca en el resumen.
 
 ---
 

@@ -39,24 +39,57 @@ const TZ = 'Europe/Madrid';
 /* ---------- Datos iniciales de la tab Config (solo se usan en setup) ---------- */
 
 // categoria_app, categoria_excel, subcategoria_excel, fijo_o_variable, orden, icono, mostrar, padre
+// mostrar = 'grupo' → botón de categoría principal (categoria_app es su nombre corto en la app)
+// mostrar = 'sub'   → subcategoría; 'padre' es el nombre corto de su grupo. categoria_app = lo que se guarda.
+// mostrar = 'oculta'→ existe pero no se muestra.
 const CONFIG_CATEGORIAS_INICIALES = [
-  ['Supermercado', 'Alimentación', 'Supermercado', 'Variable', 1, '🛒', 'chip', ''],
-  ['Comida', 'Alimentación', 'Delivery', 'Variable', 2, '🍔', 'chip', ''],
-  ['Salidas', 'Ocio_y_Entretenimiento', 'Food & Drinks', 'Variable', 3, '🍻', 'chip', ''],
-  ['Transporte', 'Transporte', 'Transporte público', 'Variable', 4, '🚇', 'chip', ''],
-  ['Uber/taxi', 'Transporte', 'Uber,etc', 'Variable', 5, '🚕', 'sub', 'Transporte'],
-  ['Ropa', 'Cuidado_Personal_y_Bienestar', 'Ropa y calzado', 'Variable', 6, '👕', 'chip', ''],
-  ['Hogar', 'Vivienda_y_Servicios', 'Hogar compras y mantenimiento', 'Variable', 7, '🛋️', 'chip', ''],
-  ['Salud', 'Cuidado_Personal_y_Bienestar', 'Salud', 'Variable', 8, '💊', 'chip', ''],
-  ['Gym', 'Cuidado_Personal_y_Bienestar', 'Deporte', 'Fijo', 9, '🏋️', 'chip', ''],
-  ['Viaje', 'Viajes_Eventos_Otros', 'Viajes', 'Variable', 10, '✈️', 'chip', ''],
-  ['Alquiler', 'Vivienda_y_Servicios', 'Alquiler', 'Fijo', 11, '🏠', 'chip', ''],
-  ['Servicios de Casa', 'Vivienda_y_Servicios', 'Servicios', 'Fijo', 12, '💡', 'chip', ''],
-  ['Subscripciones', 'Vivienda_y_Servicios', 'Suscripciones', 'Fijo', 13, '📺', 'chip', ''],
-  ['Celular', 'Vivienda_y_Servicios', 'Internet y Movil', 'Fijo', 14, '📱', 'chip', ''],
-  ['Random', 'Viajes_Eventos_Otros', 'Otros', 'Variable', 15, '🎲', 'chip', ''],
-  ['IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', 16, '🪑', 'oculta', ''],
+  ['Vivienda', 'Vivienda_y_Servicios', '', '', 1, '🏠', 'grupo', ''],
+  ['Alimentación', 'Alimentación', '', '', 2, '🛒', 'grupo', ''],
+  ['Transporte', 'Transporte', '', '', 3, '🚇', 'grupo', ''],
+  ['Cuidado personal', 'Cuidado_Personal_y_Bienestar', '', '', 4, '🧴', 'grupo', ''],
+  ['Educación', 'Educación', '', '', 5, '📚', 'grupo', ''],
+  ['Ocio', 'Ocio_y_Entretenimiento', '', '', 6, '🍻', 'grupo', ''],
+  ['Viajes y otros', 'Viajes_Eventos_Otros', '', '', 7, '✈️', 'grupo', ''],
+
+  ['Alquiler', 'Vivienda_y_Servicios', 'Alquiler', 'Fijo', 11, '🏠', 'sub', 'Vivienda'],
+  ['Servicios', 'Vivienda_y_Servicios', 'Servicios', 'Variable', 12, '💡', 'sub', 'Vivienda'],
+  ['Internet y Movil', 'Vivienda_y_Servicios', 'Internet y Movil', 'Fijo', 13, '📱', 'sub', 'Vivienda'],
+  ['Suscripciones', 'Vivienda_y_Servicios', 'Suscripciones', 'Fijo', 14, '📺', 'sub', 'Vivienda'],
+  ['Impuestos', 'Vivienda_y_Servicios', 'Impuestos', 'Variable', 15, '🧾', 'sub', 'Vivienda'],
+  ['Hogar compras y mantenimiento', 'Vivienda_y_Servicios', 'Hogar compras y mantenimiento', 'Variable', 16, '🛋️', 'sub', 'Vivienda'],
+  ['Muebles IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', 17, '🪑', 'sub', 'Vivienda'],
+
+  ['Supermercado', 'Alimentación', 'Supermercado', 'Variable', 21, '🛒', 'sub', 'Alimentación'],
+  ['Delivery', 'Alimentación', 'Delivery', 'Variable', 22, '🛵', 'sub', 'Alimentación'],
+
+  ['Transporte público', 'Transporte', 'Transporte público', 'Variable', 31, '🚇', 'sub', 'Transporte'],
+  ['Uber,etc', 'Transporte', 'Uber,etc', 'Variable', 32, '🚕', 'sub', 'Transporte'],
+
+  ['Cuidado Personal', 'Cuidado_Personal_y_Bienestar', 'Cuidado Personal', 'Variable', 41, '💇', 'sub', 'Cuidado personal'],
+  ['Deporte', 'Cuidado_Personal_y_Bienestar', 'Deporte', 'Fijo', 42, '🏋️', 'sub', 'Cuidado personal'],
+  ['Salud', 'Cuidado_Personal_y_Bienestar', 'Salud', 'Variable', 43, '💊', 'sub', 'Cuidado personal'],
+  ['Ropa y calzado', 'Cuidado_Personal_y_Bienestar', 'Ropa y calzado', 'Variable', 44, '👕', 'sub', 'Cuidado personal'],
+
+  ['Educación', 'Educación', 'Educación', 'Variable', 51, '📚', 'sub', 'Educación'],
+
+  ['Food & Drinks', 'Ocio_y_Entretenimiento', 'Food & Drinks', 'Variable', 61, '🍻', 'sub', 'Ocio'],
+  ['Cafe', 'Ocio_y_Entretenimiento', 'Cafe', 'Variable', 62, '☕', 'sub', 'Ocio'],
+  ['Entretenimiento', 'Ocio_y_Entretenimiento', 'Entretenimiento', 'Variable', 63, '🎬', 'sub', 'Ocio'],
+
+  ['Regalos', 'Viajes_Eventos_Otros', 'Regalos', 'Variable', 71, '🎁', 'sub', 'Viajes y otros'],
+  ['Eventos especiales', 'Viajes_Eventos_Otros', 'Eventos especiales', 'Variable', 72, '🎉', 'sub', 'Viajes y otros'],
+  ['Viajes', 'Viajes_Eventos_Otros', 'Viajes', 'Variable', 73, '✈️', 'sub', 'Viajes y otros'],
+  ['Otros', 'Viajes_Eventos_Otros', 'Otros', 'Variable', 74, '🎲', 'sub', 'Viajes y otros'],
+  ['Imprevistos', 'Viajes_Eventos_Otros', 'Imprevistos', 'Variable', 75, '⚠️', 'sub', 'Viajes y otros'],
 ];
+
+// Nombres de la versión anterior de la app → subcategoría nueva (para móviles sin actualizar y datos viejos).
+const ALIAS_CATEGORIAS = {
+  'Comida': 'Delivery', 'Salidas': 'Food & Drinks', 'Ropa': 'Ropa y calzado', 'Hogar': 'Hogar compras y mantenimiento',
+  'Gym': 'Deporte', 'Viaje': 'Viajes', 'Random': 'Otros', 'Uber/taxi': 'Uber,etc', 'Servicios de Casa': 'Servicios',
+  'Subscripciones': 'Suscripciones', 'Celular': 'Internet y Movil', 'IKEA cuotas': 'Muebles IKEA cuotas',
+  'Transporte': 'Transporte público',
+};
 
 // forma_pago, orden_fran, orden_cami  (vacío = esa persona no la ve)
 const CONFIG_FORMAS_PAGO_INICIALES = [
@@ -66,7 +99,7 @@ const CONFIG_FORMAS_PAGO_INICIALES = [
 // categoria_app, pct_fran, pct_cami  (excepciones a la regla "según ingresos")
 const CONFIG_REPARTO_INICIAL = [
   ['Alquiler', 1, 0],
-  ['Servicios de Casa', 1, 0],
+  ['Servicios', 1, 0],
 ];
 
 const CONFIG_PARAMETROS_INICIALES = [
@@ -78,8 +111,8 @@ const CONFIG_PARAMETROS_INICIALES = [
 // activo, descripcion, importe, categoria_app, personal_o_compartido, pagado_por, forma_pago, dia_del_mes
 const FIJOS_INICIALES = [
   [false, 'Alquiler', 1055, 'Alquiler', 'Compartido', 'Fran', 'Santander', 1],
-  [false, 'Muebles IKEA cuotas', 140, 'IKEA cuotas', 'Compartido', 'Fran', 'Santander', 5],
-  [false, 'Internet y Móvil', 25, 'Celular', 'Compartido', 'Fran', 'Santander', 5],
-  [false, 'Suscripciones', 24, 'Subscripciones', 'Compartido', 'Fran', 'Revolut', 5],
-  [false, 'Gym', 60, 'Gym', 'Compartido', 'Fran', 'Santander', 1],
+  [false, 'Muebles IKEA cuotas', 140, 'Muebles IKEA cuotas', 'Compartido', 'Fran', 'Santander', 5],
+  [false, 'Internet y Móvil', 25, 'Internet y Movil', 'Compartido', 'Fran', 'Santander', 5],
+  [false, 'Suscripciones', 24, 'Suscripciones', 'Compartido', 'Fran', 'Revolut', 5],
+  [false, 'Gym', 60, 'Deporte', 'Compartido', 'Fran', 'Santander', 1],
 ];

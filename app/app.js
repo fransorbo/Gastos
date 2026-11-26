@@ -1,7 +1,7 @@
 /* Gastos F&C — PWA para cargar gastos e ingresos en Google Sheets. */
 'use strict';
 
-const VERSION = '1.1.1';
+const VERSION = '1.2.0';
 
 /* ============================ Utilidades ============================ */
 
@@ -60,22 +60,37 @@ function haptic() {
 
 const CONFIG_POR_DEFECTO = {
   categorias: [
-    ['Supermercado', 'Alimentación', 'Supermercado', 'Variable', '🛒', 'chip', ''],
-    ['Comida', 'Alimentación', 'Delivery', 'Variable', '🍔', 'chip', ''],
-    ['Salidas', 'Ocio_y_Entretenimiento', 'Food & Drinks', 'Variable', '🍻', 'chip', ''],
-    ['Transporte', 'Transporte', 'Transporte público', 'Variable', '🚇', 'chip', ''],
-    ['Uber/taxi', 'Transporte', 'Uber,etc', 'Variable', '🚕', 'sub', 'Transporte'],
-    ['Ropa', 'Cuidado_Personal_y_Bienestar', 'Ropa y calzado', 'Variable', '👕', 'chip', ''],
-    ['Hogar', 'Vivienda_y_Servicios', 'Hogar compras y mantenimiento', 'Variable', '🛋️', 'chip', ''],
-    ['Salud', 'Cuidado_Personal_y_Bienestar', 'Salud', 'Variable', '💊', 'chip', ''],
-    ['Gym', 'Cuidado_Personal_y_Bienestar', 'Deporte', 'Fijo', '🏋️', 'chip', ''],
-    ['Viaje', 'Viajes_Eventos_Otros', 'Viajes', 'Variable', '✈️', 'chip', ''],
-    ['Alquiler', 'Vivienda_y_Servicios', 'Alquiler', 'Fijo', '🏠', 'chip', ''],
-    ['Servicios de Casa', 'Vivienda_y_Servicios', 'Servicios', 'Fijo', '💡', 'chip', ''],
-    ['Subscripciones', 'Vivienda_y_Servicios', 'Suscripciones', 'Fijo', '📺', 'chip', ''],
-    ['Celular', 'Vivienda_y_Servicios', 'Internet y Movil', 'Fijo', '📱', 'chip', ''],
-    ['Random', 'Viajes_Eventos_Otros', 'Otros', 'Variable', '🎲', 'chip', ''],
-    ['IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', '🪑', 'oculta', ''],
+    ['Vivienda', 'Vivienda_y_Servicios', '', '', '🏠', 'grupo', ''],
+    ['Alimentación', 'Alimentación', '', '', '🛒', 'grupo', ''],
+    ['Transporte', 'Transporte', '', '', '🚇', 'grupo', ''],
+    ['Cuidado personal', 'Cuidado_Personal_y_Bienestar', '', '', '🧴', 'grupo', ''],
+    ['Educación', 'Educación', '', '', '📚', 'grupo', ''],
+    ['Ocio', 'Ocio_y_Entretenimiento', '', '', '🍻', 'grupo', ''],
+    ['Viajes y otros', 'Viajes_Eventos_Otros', '', '', '✈️', 'grupo', ''],
+    ['Alquiler', 'Vivienda_y_Servicios', 'Alquiler', 'Fijo', '🏠', 'sub', 'Vivienda'],
+    ['Servicios', 'Vivienda_y_Servicios', 'Servicios', 'Variable', '💡', 'sub', 'Vivienda'],
+    ['Internet y Movil', 'Vivienda_y_Servicios', 'Internet y Movil', 'Fijo', '📱', 'sub', 'Vivienda'],
+    ['Suscripciones', 'Vivienda_y_Servicios', 'Suscripciones', 'Fijo', '📺', 'sub', 'Vivienda'],
+    ['Impuestos', 'Vivienda_y_Servicios', 'Impuestos', 'Variable', '🧾', 'sub', 'Vivienda'],
+    ['Hogar compras y mantenimiento', 'Vivienda_y_Servicios', 'Hogar compras y mantenimiento', 'Variable', '🛋️', 'sub', 'Vivienda'],
+    ['Muebles IKEA cuotas', 'Vivienda_y_Servicios', 'Muebles IKEA cuotas', 'Fijo', '🪑', 'sub', 'Vivienda'],
+    ['Supermercado', 'Alimentación', 'Supermercado', 'Variable', '🛒', 'sub', 'Alimentación'],
+    ['Delivery', 'Alimentación', 'Delivery', 'Variable', '🛵', 'sub', 'Alimentación'],
+    ['Transporte público', 'Transporte', 'Transporte público', 'Variable', '🚇', 'sub', 'Transporte'],
+    ['Uber,etc', 'Transporte', 'Uber,etc', 'Variable', '🚕', 'sub', 'Transporte'],
+    ['Cuidado Personal', 'Cuidado_Personal_y_Bienestar', 'Cuidado Personal', 'Variable', '💇', 'sub', 'Cuidado personal'],
+    ['Deporte', 'Cuidado_Personal_y_Bienestar', 'Deporte', 'Fijo', '🏋️', 'sub', 'Cuidado personal'],
+    ['Salud', 'Cuidado_Personal_y_Bienestar', 'Salud', 'Variable', '💊', 'sub', 'Cuidado personal'],
+    ['Ropa y calzado', 'Cuidado_Personal_y_Bienestar', 'Ropa y calzado', 'Variable', '👕', 'sub', 'Cuidado personal'],
+    ['Educación', 'Educación', 'Educación', 'Variable', '📚', 'sub', 'Educación'],
+    ['Food & Drinks', 'Ocio_y_Entretenimiento', 'Food & Drinks', 'Variable', '🍻', 'sub', 'Ocio'],
+    ['Cafe', 'Ocio_y_Entretenimiento', 'Cafe', 'Variable', '☕', 'sub', 'Ocio'],
+    ['Entretenimiento', 'Ocio_y_Entretenimiento', 'Entretenimiento', 'Variable', '🎬', 'sub', 'Ocio'],
+    ['Regalos', 'Viajes_Eventos_Otros', 'Regalos', 'Variable', '🎁', 'sub', 'Viajes y otros'],
+    ['Eventos especiales', 'Viajes_Eventos_Otros', 'Eventos especiales', 'Variable', '🎉', 'sub', 'Viajes y otros'],
+    ['Viajes', 'Viajes_Eventos_Otros', 'Viajes', 'Variable', '✈️', 'sub', 'Viajes y otros'],
+    ['Otros', 'Viajes_Eventos_Otros', 'Otros', 'Variable', '🎲', 'sub', 'Viajes y otros'],
+    ['Imprevistos', 'Viajes_Eventos_Otros', 'Imprevistos', 'Variable', '⚠️', 'sub', 'Viajes y otros'],
   ].map(([categoria_app, categoria_excel, subcategoria_excel, fijo_o_variable, icono, mostrar, padre], i) =>
     ({ categoria_app, categoria_excel, subcategoria_excel, fijo_o_variable, icono, mostrar, padre, orden: i + 1 })),
   formasPago: ['Santander', 'Revolut', 'Cash', 'Sabadell', 'Monedas'],
@@ -95,7 +110,25 @@ let recientes = LS.get('recientes', []); // última lista que vino del servidor
 const backend = () => ({ url: LS.get('url', ''), token: LS.get('token', '') });
 const configurado = () => !!(backend().url && backend().token);
 
-const catPorNombre = n => cfg.categorias.find(c => c.categoria_app === n);
+// Nombres de la versión anterior → subcategoría nueva (para mostrar movimientos viejos)
+const ALIAS_CATEGORIAS = {
+  'Comida': 'Delivery', 'Salidas': 'Food & Drinks', 'Ropa': 'Ropa y calzado', 'Hogar': 'Hogar compras y mantenimiento',
+  'Gym': 'Deporte', 'Viaje': 'Viajes', 'Random': 'Otros', 'Uber/taxi': 'Uber,etc', 'Servicios de Casa': 'Servicios',
+  'Subscripciones': 'Suscripciones', 'Celular': 'Internet y Movil', 'IKEA cuotas': 'Muebles IKEA cuotas',
+  'Transporte': 'Transporte público',
+};
+/** Categorías de Config; si la guardada es del formato viejo (sin grupos), usa las de la app. */
+function categorias() {
+  const c = cfg.categorias || [];
+  return c.some(x => x.mostrar === 'grupo') ? c : CONFIG_POR_DEFECTO.categorias;
+}
+const grupos = () => categorias().filter(c => c.mostrar === 'grupo');
+const subsDe = g => categorias().filter(c => c.mostrar === 'sub' && c.padre === g);
+/** Subcategoría (lo que se guarda) por nombre; nunca devuelve un grupo. */
+const catPorNombre = n => {
+  const subs = categorias().filter(c => c.mostrar !== 'grupo');
+  return subs.find(c => c.categoria_app === n) || subs.find(c => c.categoria_app === ALIAS_CATEGORIAS[n]);
+};
 const iconoDe = m => m.tipo === 'Ingreso' ? '💶' : ((catPorNombre(m.categoria_app) || {}).icono || '•');
 
 function repartoDefecto(cat, fecha) {
@@ -182,6 +215,7 @@ function nuevoForm(tipo = 'Gasto') {
     personal_o_compartido: LS.get('pc.' + (quien || 'x'), 'Personal'),
     pagado_por: quien || 'Fran',
     pct_fran: 60, repartoManual: false,
+    grupo: '',
     categoria_app: '',
     fijo_o_variable: 'Variable',
     cuotas: 3,
@@ -198,13 +232,13 @@ function recalcularReparto() {
   f.pct_fran = Math.round((r.fran || 0) * 100);
 }
 
-function categoriaPadre(nombre) {
+function grupoDe(nombre) {
   const c = catPorNombre(nombre);
-  return c && c.mostrar === 'sub' ? c.padre : nombre;
+  return c ? c.padre : '';
 }
 
 function renderFormEstatico() {
-  $('#cats').innerHTML = cfg.categorias.filter(c => c.mostrar === 'chip').map(c =>
+  $('#cats').innerHTML = grupos().map(c =>
     `<button type="button" class="cat" data-v="${esc(c.categoria_app)}"><span class="ico">${esc(c.icono)}</span><span class="txt">${esc(c.categoria_app)}</span></button>`).join('');
   $('#tiposIngreso').innerHTML = (cfg.tiposIngreso || []).map(n =>
     `<button type="button" class="chip" data-v="${esc(n)}">${esc(n)}</button>`).join('');
@@ -243,12 +277,12 @@ function pintarForm() {
   $('#rFran').textContent = f.pct_fran;
   $('#rCami').textContent = 100 - f.pct_fran;
 
-  const padre = categoriaPadre(f.categoria_app);
-  marcar($('#cats'), padre);
-  const subs = cfg.categorias.filter(c => c.mostrar === 'sub' && c.padre === padre);
+  marcar($('#cats'), f.grupo);
+  const subs = f.grupo ? subsDe(f.grupo) : [];
   $('#subcats').hidden = !subs.length;
   $('#subcats').innerHTML = subs.map(s =>
     `<button type="button" class="chip${s.categoria_app === f.categoria_app ? ' on' : ''}" data-v="${esc(s.categoria_app)}">${esc(s.icono)} ${esc(s.categoria_app)}</button>`).join('');
+  $('#subcats').classList.toggle('falta', !!f.grupo && !f.categoria_app);
 
   marcar($('#tiposIngreso'), f.tipo_ingreso);
   marcar($('#segRecibe'), f.pagado_por);
@@ -342,10 +376,13 @@ function enlazarForm() {
     recalcularReparto();
   };
   seg('#cats', v => {
-    // tocar de nuevo el padre cuando hay una sub elegida → vuelve al padre
-    elegirCat(v);
+    if (f.grupo === v) return;
+    f.grupo = v;
+    const subs = subsDe(v);
+    if (subs.length === 1) elegirCat(subs[0].categoria_app);   // ej. Educación
+    else { f.categoria_app = ''; recalcularReparto(); }
   });
-  seg('#subcats', v => elegirCat(f.categoria_app === v ? categoriaPadre(v) : v));
+  seg('#subcats', v => elegirCat(v));
 
   const moverCuotas = d => {
     f.cuotas = Math.min(CUOTAS_MAX, Math.max(CUOTAS_MIN, (f.cuotas || 3) + d));
@@ -387,7 +424,7 @@ function enlazarForm() {
 async function guardar() {
   const importe = parseImporte($('#importe').value);
   if (!(importe > 0)) { toast('Pon un importe'); $('#importe').focus(); return; }
-  if (f.tipo === 'Gasto' && !f.categoria_app) { toast('Elige una categoría'); return; }
+  if (f.tipo === 'Gasto' && !f.categoria_app) { toast(f.grupo ? 'Elige una subcategoría' : 'Elige una categoría'); return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(f.fecha)) { toast('Fecha inválida'); return; }
   haptic();
 
@@ -467,7 +504,8 @@ function editar(mov) {
     pagado_por: mov.pagado_por || quien,
     pct_fran: mov.pct_fran === '' || mov.pct_fran == null ? 60 : Math.round(Number(mov.pct_fran) * 100),
     repartoManual: true,
-    categoria_app: mov.categoria_app || '',
+    grupo: grupoDe(mov.categoria_app),
+    categoria_app: (catPorNombre(mov.categoria_app) || {}).categoria_app || mov.categoria_app || '',
     fijo_o_variable: mov.fijo_o_variable || 'Variable',
     cuotas: 3,
     detalle: mov.detalle || '',

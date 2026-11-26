@@ -29,7 +29,7 @@ function resumenMes_(mes, usuario) {
 
   // Etiquetas de la app (categoria_app e icono) por Categoria Principal + Subcategoría
   const etiquetas = {};
-  leerConfig_().categorias.forEach(c => {
+  leerConfig_().categorias.filter(c => c.mostrar !== 'grupo').forEach(c => {
     const k = norm_(c.categoria_excel) + '|' + norm_(c.subcategoria_excel);
     if (!etiquetas[k]) etiquetas[k] = { nombre: c.categoria_app, icono: c.icono };
   });

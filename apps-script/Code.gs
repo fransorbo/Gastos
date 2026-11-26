@@ -148,8 +148,13 @@ function leerConfig_() {
   return _cache.config;
 }
 
+/** Subcategoría elegible por su nombre (los grupos no se pueden guardar). Acepta nombres de la versión anterior. */
 function categoriaPorNombre_(nombre) {
-  return leerConfig_().categorias.find(c => c.categoria_app === nombre) || null;
+  const elegibles = leerConfig_().categorias.filter(c => c.mostrar !== 'grupo' && c.subcategoria_excel);
+  const n = String(nombre || '').trim();
+  return elegibles.find(c => c.categoria_app === n)
+    || (ALIAS_CATEGORIAS[n] ? elegibles.find(c => c.categoria_app === ALIAS_CATEGORIAS[n]) : null)
+    || null;
 }
 
 /* ============================ % de ingresos por mes ============================ */
@@ -205,6 +210,7 @@ function leerPctIngresos_() {
 function repartoPara_(categoriaApp, fechaStr) {
   const cfg = leerConfig_();
   if (cfg.reparto[categoriaApp]) return cfg.reparto[categoriaApp];
+  if (ALIAS_CATEGORIAS[categoriaApp] && cfg.reparto[ALIAS_CATEGORIAS[categoriaApp]]) return cfg.reparto[ALIAS_CATEGORIAS[categoriaApp]];
   const pct = leerPctIngresos_();
   const key = String(fechaStr).slice(0, 7);
   if (pct[key]) return pct[key];

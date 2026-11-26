@@ -143,7 +143,7 @@ function testIdempotencia() {
 function testColaOffline() {
   const a = mov_({ importe_eur: 10 });
   const aEditado = Object.assign({}, a, { importe_eur: 12.5, editado_en: despues_(1000) });
-  const b = mov_({ personal_o_compartido: 'Personal', categoria_app: 'Comida' });
+  const b = mov_({ personal_o_compartido: 'Personal', categoria_app: 'Delivery' });
   const c = mov_();
   const cBorrado = Object.assign({}, c, { estado: 'borrado', editado_en: despues_(1000) });
   const cola = [a, aEditado, b, c, cBorrado];
@@ -164,7 +164,7 @@ function testFijos() {
   const sh = hoja_(TAB.FIJOS);
   const fila = sh.getLastRow() + 1;
   sh.getRange(fila, 1, 1, FIJOS_COLS.length)
-    .setValues([[true, TEST_DETALLE, 3.21, 'Subscripciones', 'Compartido', 'Fran', 'Revolut', 1]]);
+    .setValues([[true, TEST_DETALLE, 3.21, 'Suscripciones', 'Compartido', 'Fran', 'Revolut', 1]]);
   try {
     const hoy = new Date();
     generarFijos_(hoy);
